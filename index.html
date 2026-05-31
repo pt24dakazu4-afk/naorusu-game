@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>ナオルス シューティング</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -37,17 +37,18 @@
   button.btn:active { transform: translateY(4px); box-shadow: 0 1px 0 #d9577a; }
   .hidden { display: none !important; }
   .hint { font-size: 12px; color: #d98aa0; margin-top: 10px; line-height: 1.6; }
-  #touch { position: absolute; inset: 0; pointer-events: none; }
-  .pad-l { position: absolute; left: 14px; bottom: 14px; display: grid;
-    grid-template-columns: repeat(3,56px); grid-template-rows: repeat(3,56px); gap: 6px; pointer-events: auto; }
-  .pad-r { position: absolute; right: 18px; bottom: 30px; pointer-events: auto; }
+  #touch { position: absolute; inset: 0; pointer-events: none; touch-action: none; }
+  .pad-l { position: absolute; left: calc(16px + env(safe-area-inset-left)); bottom: calc(24px + env(safe-area-inset-bottom)); display: grid;
+    grid-template-columns: repeat(3,58px); grid-template-rows: repeat(3,58px); gap: 7px; pointer-events: auto; }
+  .pad-r { position: absolute; right: calc(22px + env(safe-area-inset-right)); bottom: calc(40px + env(safe-area-inset-bottom)); pointer-events: auto; }
   .tbtn { border-radius: 16px; background: rgba(255,255,255,.6); border: 3px solid #f49bb3;
     color: #c34d6c; font-size: 24px; font-weight: bold; display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 4px 10px rgba(195,77,108,.25); }
-  .tbtn:active { background: rgba(255,180,200,.9); }
+    box-shadow: 0 4px 10px rgba(195,77,108,.25);
+    touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+  .tbtn.pressed, .tbtn:active { background: rgba(255,180,200,.95); transform: scale(0.94); }
   #upBtn{ grid-column:2; grid-row:1; } #leftBtn{ grid-column:1; grid-row:2; }
   #rightBtn{ grid-column:3; grid-row:2; } #downBtn{ grid-column:2; grid-row:3; }
-  #fireBtn { width: 86px; height: 86px; border-radius: 50%; font-size: 34px; }
+  #fireBtn { width: 92px; height: 92px; border-radius: 50%; font-size: 34px; }
   @media (hover:hover) and (pointer:fine) { #touch { display: none; } }
 </style>
 </head>
@@ -778,9 +779,20 @@
 
   function bindHold(id,on,off){
     const el=document.getElementById(id);
-    const s=e=>{ e.preventDefault(); on(); }, f=e=>{ e.preventDefault(); off(); };
-    el.addEventListener("touchstart",s,{passive:false}); el.addEventListener("touchend",f,{passive:false});
-    el.addEventListener("mousedown",s); el.addEventListener("mouseup",f); el.addEventListener("mouseleave",f);
+    let active=false;
+    const press=e=>{ if(e) e.preventDefault(); if(active) return; active=true; el.classList.add("pressed"); on(); };
+    const release=e=>{ if(e) e.preventDefault(); if(!active) return; active=false; el.classList.remove("pressed"); off(); };
+    if (window.PointerEvent){
+      el.addEventListener("pointerdown",e=>{ press(e); try{ el.setPointerCapture(e.pointerId); }catch(_){} },{passive:false});
+      el.addEventListener("pointerup",release,{passive:false});
+      el.addEventListener("pointercancel",release,{passive:false});
+      el.addEventListener("lostpointercapture",release,{passive:false});
+    } else {
+      el.addEventListener("touchstart",press,{passive:false});
+      el.addEventListener("touchend",release,{passive:false});
+      el.addEventListener("touchcancel",release,{passive:false});
+      el.addEventListener("mousedown",press); el.addEventListener("mouseup",release); el.addEventListener("mouseleave",release);
+    }
   }
   bindHold("leftBtn",()=>keys.left=true,()=>keys.left=false);
   bindHold("rightBtn",()=>keys.right=true,()=>keys.right=false);
