@@ -167,7 +167,7 @@
 
   // ---------- waves / boss ----------
   function spawnWave(){
-    if (wave % 3 === 0){ spawnBoss(); toSpawn = 0; }
+    if (wave === 3 || wave >= 5){ spawnBoss(); toSpawn = 0; }
     else { toSpawn = 6 + wave*2; spawnTimer = 40; }
   }
   function spawnEnemy(){
