@@ -8,12 +8,13 @@
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body {
     height: 100%;
+    height: 100dvh;
     background: #f7c5d0;
     font-family: "Hiragino Maru Gothic ProN", "Hiragino Sans", "Yu Gothic", sans-serif;
     overflow: hidden;
     user-select: none;
   }
-  #wrap { position: relative; width: 100vw; height: 100vh; display: flex; align-items: center; justify-content: center; }
+  #wrap { position: relative; width: 100vw; height: 100vh; height: 100dvh; display: flex; align-items: center; justify-content: center; }
   canvas { background: #fcdce4; box-shadow: 0 10px 40px rgba(214,120,145,.45); border-radius: 18px; touch-action: none; }
   #ui { position: absolute; inset: 0; pointer-events: none; display: flex; align-items: center; justify-content: center; }
   .panel {
