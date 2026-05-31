@@ -109,11 +109,8 @@
     document.addEventListener(ev, e=>e.preventDefault(), {passive:false}));
   let lastTouchEnd = 0;
   document.addEventListener("touchend", e=>{
-    // skip the on-screen control buttons: preventDefault here would suppress
-    // their pointerup and leave a button stuck "pressed". They block zoom via CSS.
-    const onControls = e.target && e.target.closest && e.target.closest("#touch");
     const now = Date.now();
-    if (!onControls && now - lastTouchEnd <= 350) e.preventDefault();
+    if (now - lastTouchEnd <= 350) e.preventDefault();
     lastTouchEnd = now;
   }, {passive:false});
 
@@ -794,19 +791,18 @@
   function bindHold(id,on,off){
     const el=document.getElementById(id);
     let active=false;
-    const press=e=>{ if(e) e.preventDefault(); if(active) return; active=true; el.classList.add("pressed"); on(); };
-    const release=e=>{ if(e) e.preventDefault(); if(!active) return; active=false; el.classList.remove("pressed"); off(); };
-    if (window.PointerEvent){
-      el.addEventListener("pointerdown",e=>{ press(e); try{ el.setPointerCapture(e.pointerId); }catch(_){} },{passive:false});
-      el.addEventListener("pointerup",release,{passive:false});
-      el.addEventListener("pointercancel",release,{passive:false});
-      el.addEventListener("lostpointercapture",release,{passive:false});
-    } else {
-      el.addEventListener("touchstart",press,{passive:false});
-      el.addEventListener("touchend",release,{passive:false});
-      el.addEventListener("touchcancel",release,{passive:false});
-      el.addEventListener("mousedown",press); el.addEventListener("mouseup",release); el.addEventListener("mouseleave",release);
-    }
+    const press=()=>{ if(active) return; active=true; el.classList.add("pressed"); on(); };
+    const release=()=>{ if(!active) return; active=false; el.classList.remove("pressed"); off(); };
+    // Touch: keep press/release inside the touch handlers and preventDefault to
+    // block double-tap zoom. Because release lives in touchend/touchcancel
+    // itself (not in a derived pointer event), the button never gets stuck.
+    el.addEventListener("touchstart",e=>{ e.preventDefault(); press(); },{passive:false});
+    el.addEventListener("touchend",e=>{ e.preventDefault(); release(); },{passive:false});
+    el.addEventListener("touchcancel",e=>{ e.preventDefault(); release(); },{passive:false});
+    // Desktop mouse (suppressed on touch devices by the preventDefault above).
+    el.addEventListener("mousedown",e=>{ e.preventDefault(); press(); });
+    el.addEventListener("mouseup",e=>{ e.preventDefault(); release(); });
+    el.addEventListener("mouseleave",()=>release());
   }
   bindHold("leftBtn",()=>keys.left=true,()=>keys.left=false);
   bindHold("rightBtn",()=>keys.right=true,()=>keys.right=false);
